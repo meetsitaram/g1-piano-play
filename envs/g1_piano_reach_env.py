@@ -522,6 +522,12 @@ class G1PianoReachEnv(DirectRLEnv):
         contact_reward = self.cfg.rew_scale_contact * (left_contact + right_contact)
         both_hands_reward = self.cfg.rew_scale_both_hands * (left_contact * right_contact)
         
+        # === Hand Asymmetry Penalty ===
+        # Penalize when one hand is close but the other is far (encourages both hands to reach)
+        # Calculate absolute difference in distances to discourage one-hand-only strategy
+        hand_distance_diff = torch.abs(left_dist - right_dist)
+        asymmetry_penalty = self.cfg.rew_scale_hand_asymmetry * hand_distance_diff
+        
         # === Action Smoothness ===
         # Penalize large changes in actions between timesteps (reduces flapping)
         action_diff = torch.sum(torch.square(self.actions - self.previous_actions), dim=-1)
@@ -555,6 +561,7 @@ class G1PianoReachEnv(DirectRLEnv):
             dist_reward +
             contact_reward +
             both_hands_reward +
+            asymmetry_penalty +
             action_penalty +
             joint_vel_penalty +
             joint_accel_penalty +

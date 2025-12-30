@@ -162,26 +162,32 @@ class G1PianoReachEnvCfg(DirectRLEnvCfg):
     # ========================================================================
     
     # Distance reward (encourage moving toward piano)
-    rew_scale_reaching = 5.0  # INCREASED from 2.0 - must dominate smoothness penalties!
+    rew_scale_reaching = 10.0  # STRONG reaching motivation (was 5.0, originally 2.0)
     
     # Contact reward (bonus for touching piano)
-    rew_scale_contact = 15.0  # INCREASED from 10.0 - strong motivation to reach
+    rew_scale_contact = 15.0  # Moderate per-hand reward (was 20.0 → 10.0 → back to 15.0)
     
     # Both hands bonus (extra reward when both hands touch)
-    rew_scale_both_hands = 10.0  # INCREASED from 5.0 - reward coordination
+    rew_scale_both_hands = 100.0  # HUGE bonus for coordination (was 15.0 → 50.0 → 100.0!)
+    
+    # Hand symmetry penalty (discourage one-hand-only strategy)
+    # DISABLED - was too harsh, accumulates like velocity penalty
+    rew_scale_hand_asymmetry = 0.0  # Was -2.0, caused negative rewards
     
     # === SMOOTHNESS PENALTIES (reduce flapping/flickering) ===
+    # IMPORTANT: These are MUCH more gentle now to allow reaching!
+    
     # Action smoothness (penalize jerky motion)
-    rew_scale_action_rate = -0.5  # REDUCED from -1.0 - still discourages flapping but allows reaching
+    rew_scale_action_rate = -0.1  # GENTLE - only for extreme flapping (was -0.5)
     
     # Joint velocity penalty (penalize high arm velocities for smoother motion)
-    rew_scale_joint_vel = -0.05  # Penalize rapid joint movements
+    rew_scale_joint_vel = 0.0  # DISABLED - was causing robot to not move (was -0.05)
     
     # Joint acceleration penalty (penalize rapid velocity changes)
-    rew_scale_joint_accel = -0.01  # Penalize acceleration spikes (optional, can disable if needed)
+    rew_scale_joint_accel = 0.0  # DISABLED - was causing robot to not move (was -0.01)
     
     # Joint limits (penalize approaching limits)
-    rew_scale_joint_limit = -0.5
+    rew_scale_joint_limit = -0.5  # Keep for safety
     
     # ========================================================================
     # Contact Detection Configuration
