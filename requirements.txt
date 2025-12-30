@@ -1,0 +1,10 @@
+# Note: pxr (USD Python bindings) is provided by Isaac Sim
+# Do NOT install usd-core via pip as it will conflict with Isaac Sim's bundled USD
+
+# If you need to install pxr separately (NOT RECOMMENDED when using Isaac Sim):
+# usd-core>=24.11  # Only use this if NOT running through Isaac Lab
+
+# Other project dependencies can be added below:
+# numpy>=1.24.0
+# torch>=2.0.0
+

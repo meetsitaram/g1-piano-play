@@ -1,0 +1,101 @@
+# Copyright (c) 2022-2025, The Isaac Lab Project Developers.
+# All rights reserved.
+#
+# SPDX-License-Identifier: BSD-3-Clause
+
+# RL Games PPO configuration for G1 Piano Reaching task
+#
+# This configuration is based on:
+# - Primary: franka_cabinet (manipulation/reaching task)
+# - Secondary: humanoid (similar robot complexity)
+#
+# References:
+# - IsaacLab/source/isaaclab_tasks/isaaclab_tasks/direct/franka_cabinet/agents/rl_games_ppo_cfg.yaml
+# - IsaacLab/source/isaaclab_tasks/isaaclab_tasks/direct/humanoid/agents/rl_games_ppo_cfg.yaml
+
+params:
+  seed: 42
+
+  # Environment wrapper clipping
+  env:
+    clip_actions: 1.0
+    clip_observations: 100.0  # Standard for manipulation/reaching tasks
+
+  algo:
+    name: a2c_continuous
+
+  model:
+    name: continuous_a2c_logstd
+
+  network:
+    name: actor_critic
+    separate: False
+    
+    space:
+      continuous:
+        mu_activation: None
+        sigma_activation: None
+        mu_init:
+          name: default
+        sigma_init:
+          name: const_initializer
+          val: 0
+        fixed_sigma: True
+    
+    mlp:
+      # Network size from franka_cabinet (good for manipulation)
+      units: [256, 128, 64]
+      activation: elu
+      d2rl: False
+      
+      initializer:
+        name: default
+      regularizer:
+        name: None
+
+  load_checkpoint: False  # Set to True to resume training
+  load_path: ''  # Path to checkpoint for resuming
+
+  config:
+    name: g1_piano_reach
+    env_name: rlgpu
+    device: 'cuda:0'
+    device_name: 'cuda:0'
+    multi_gpu: False
+    ppo: True
+    mixed_precision: False
+    normalize_input: True
+    normalize_value: True
+    num_actors: -1  # Will be set from command line (num_envs)
+    
+    reward_shaper:
+      scale_value: 0.1  # Tune based on reward magnitudes
+    
+    normalize_advantage: True
+    gamma: 0.99
+    tau: 0.95
+    
+    # Learning rate - reduced to prevent divergence
+    learning_rate: 1e-4  # Reduced from 3e-4 to improve stability
+    lr_schedule: adaptive
+    kl_threshold: 0.008
+    
+    score_to_win: 100000000
+    max_epochs: 2000
+    save_best_after: 200
+    save_frequency: 100
+    
+    grad_norm: 1.0
+    entropy_coef: 0.0
+    truncate_grads: True
+    e_clip: 0.2
+    
+    # Horizon and batch sizes from franka_cabinet
+    horizon_length: 16  # Shorter horizon for reaching task
+    minibatch_size: 8192  # For 2048 envs (batch_size=2048*16=32768)
+    mini_epochs: 8
+    critic_coef: 4
+    clip_value: True
+    seq_length: 4
+    bounds_loss_coef: 0.0001
+

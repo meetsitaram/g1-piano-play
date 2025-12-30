@@ -1,0 +1,29 @@
+<?xml version="1.0" ?>
+<!-- Generated using onshape-to-robot -->
+<!-- Onshape https://cad.onshape.com/documents/2841c863e1643adb31d518f0/w/0586fea10f870d05584cd378/e/b6f189cbf60e2aec063d13c4 -->
+<robot name="table">
+  <!-- Link table -->
+  <link name="table">
+    <inertial>
+      <origin xyz="-3.51538e-17 -3.69578e-17 -0.032694" rpy="0 0 0"/>
+      <mass value="21.3733"/>
+      <inertia ixx="1.03176" ixy="-5.13946e-16" ixz="0" iyy="3.66655" iyz="0" izz="4.22828"/>
+    </inertial>
+    <!-- Part table -->
+    <visual>
+      <origin xyz="0 0 0" rpy="0 -0 0"/>
+      <geometry>
+        <mesh filename="package://assets/table.stl"/>
+      </geometry>
+      <material name="table_material">
+        <color rgba="0.941176 0.87451 0.678431 1"/>
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 -0 0"/>
+      <geometry>
+        <mesh filename="package://assets/table.stl"/>
+      </geometry>
+    </collision>
+  </link>
+</robot>
