@@ -63,6 +63,9 @@ class G1PianoReachEnv(DirectRLEnv):
         # Track previous actions for smoothness reward
         self.previous_actions = torch.zeros((self.num_envs, self.cfg.action_space), device=self.device)
         
+        # Track previous arm velocities for acceleration penalty (smoothness)
+        self._previous_arm_vel = torch.zeros((self.num_envs, len(self._arm_joint_indices)), device=self.device)
+        
         # TODO: Phase 2 (Option B) - Initialize ContactSensor
         # Uncomment when upgrading to contact sensor:
         # if self.cfg.contact_detection_method == "sensor":
@@ -520,8 +523,25 @@ class G1PianoReachEnv(DirectRLEnv):
         both_hands_reward = self.cfg.rew_scale_both_hands * (left_contact * right_contact)
         
         # === Action Smoothness ===
+        # Penalize large changes in actions between timesteps (reduces flapping)
         action_diff = torch.sum(torch.square(self.actions - self.previous_actions), dim=-1)
         action_penalty = self.cfg.rew_scale_action_rate * action_diff
+        
+        # === Joint Velocity Penalty ===
+        # Penalize high arm joint velocities for smoother motion
+        arm_vel = self.robot.data.joint_vel[:, self._arm_joint_indices]
+        joint_vel_penalty = self.cfg.rew_scale_joint_vel * torch.sum(torch.square(arm_vel), dim=-1)
+        
+        # === Joint Acceleration Penalty (Optional) ===
+        # Penalize rapid velocity changes for even smoother motion
+        if hasattr(self, '_previous_arm_vel'):
+            arm_accel = arm_vel - self._previous_arm_vel
+            joint_accel_penalty = self.cfg.rew_scale_joint_accel * torch.sum(torch.square(arm_accel), dim=-1)
+        else:
+            joint_accel_penalty = torch.zeros(self.num_envs, device=self.device)
+        
+        # Store velocity for next step (for acceleration calculation)
+        self._previous_arm_vel = arm_vel.clone()
         
         # === Joint Limit Penalty ===
         # Get normalized joint positions (assuming symmetric limits around 0)
@@ -536,6 +556,8 @@ class G1PianoReachEnv(DirectRLEnv):
             contact_reward +
             both_hands_reward +
             action_penalty +
+            joint_vel_penalty +
+            joint_accel_penalty +
             joint_limit_penalty
         )
         
@@ -618,4 +640,5 @@ class G1PianoReachEnv(DirectRLEnv):
         
         # Reset tracking variables
         self.previous_actions[env_ids] = 0.0
+        self._previous_arm_vel[env_ids] = 0.0  # Reset arm velocities for smoothness tracking
 

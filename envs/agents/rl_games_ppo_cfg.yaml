@@ -92,7 +92,9 @@ params:
     
     # Horizon and batch sizes from franka_cabinet
     horizon_length: 16  # Shorter horizon for reaching task
-    minibatch_size: 8192  # For 2048 envs (batch_size=2048*16=32768)
+    minibatch_size: 8192  # DEFAULT for 2048 envs (batch_size=2048*16=32768)
+                          # NOTE: Auto-calculated in train.py based on num_envs
+                          # to avoid "batch_size % minibatch_size != 0" errors
     mini_epochs: 8
     critic_coef: 4
     clip_value: True

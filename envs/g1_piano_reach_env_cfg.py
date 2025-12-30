@@ -162,16 +162,23 @@ class G1PianoReachEnvCfg(DirectRLEnvCfg):
     # ========================================================================
     
     # Distance reward (encourage moving toward piano)
-    rew_scale_reaching = 2.0  # Reward for reducing distance
+    rew_scale_reaching = 5.0  # INCREASED from 2.0 - must dominate smoothness penalties!
     
     # Contact reward (bonus for touching piano)
-    rew_scale_contact = 10.0  # Large bonus for contact
+    rew_scale_contact = 15.0  # INCREASED from 10.0 - strong motivation to reach
     
     # Both hands bonus (extra reward when both hands touch)
-    rew_scale_both_hands = 5.0
+    rew_scale_both_hands = 10.0  # INCREASED from 5.0 - reward coordination
     
+    # === SMOOTHNESS PENALTIES (reduce flapping/flickering) ===
     # Action smoothness (penalize jerky motion)
-    rew_scale_action_rate = -0.01  # Small penalty for action changes
+    rew_scale_action_rate = -0.5  # REDUCED from -1.0 - still discourages flapping but allows reaching
+    
+    # Joint velocity penalty (penalize high arm velocities for smoother motion)
+    rew_scale_joint_vel = -0.05  # Penalize rapid joint movements
+    
+    # Joint acceleration penalty (penalize rapid velocity changes)
+    rew_scale_joint_accel = -0.01  # Penalize acceleration spikes (optional, can disable if needed)
     
     # Joint limits (penalize approaching limits)
     rew_scale_joint_limit = -0.5

@@ -78,6 +78,8 @@ This will spawn 16 environments with random actions to verify everything works.
     --headless
 ```
 
+> **💡 Note**: `minibatch_size` is now **automatically calculated** based on `--num_envs`! You can freely switch between 16, 256, 512, or 2048 envs without config changes. See `BATCH_SIZE_DYNAMIC.md` for details.
+
 **With Video Recording**:
 ```bash
 ./IsaacLab/isaaclab.sh -p g1-piano-play/scripts/train.py \
@@ -293,11 +295,29 @@ logs/rl_games/g1_piano_reach/nn/
 
 ## Troubleshooting
 
+### ✅ Batch Size / Minibatch Size Errors (FIXED)
+
+**Previous Issue**: Changing `--num_envs` would cause:
+```
+AssertionError: assert(self.batch_size % self.minibatch_size == 0)
+```
+
+**✅ Solution**: Now **auto-calculated!** 
+
+The training script (`train.py`) now **automatically adjusts** `minibatch_size` based on `num_envs`. You can freely switch between:
+- Testing: `--num_envs 16`
+- Development: `--num_envs 256`
+- Full training: `--num_envs 2048`
+
+**No config file changes needed!** See `BATCH_SIZE_DYNAMIC.md` for details.
+
+---
+
 ### Out of Memory (OOM)
 **Symptoms**: Training crashes with CUDA OOM error
 
 **Solutions**:
-1. Reduce number of environments:
+1. Reduce number of environments (minibatch_size adjusts automatically):
    ```bash
    ./IsaacLab/isaaclab.sh -p g1-piano-play/scripts/train.py \
        --task Isaac-Piano-Reach-G1-v0 \
@@ -305,10 +325,12 @@ logs/rl_games/g1_piano_reach/nn/
        --headless
    ```
 
-2. Reduce batch size in `envs/agents/rl_games_ppo_cfg.yaml`:
+2. If still OOM, manually reduce in `envs/agents/rl_games_ppo_cfg.yaml`:
    ```yaml
-   minibatch_size: 4096  # Down from 8192
+   horizon_length: 8  # Down from 16
    ```
+
+---
 
 ### Robot Falling Immediately
 **Symptoms**: All robots fall down at start

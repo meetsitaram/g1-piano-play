@@ -137,6 +137,57 @@ def main():
         rl_games_cfg_omega.params.load_path = args_cli.checkpoint
         print(f"[INFO]: Loading model checkpoint from: {args_cli.checkpoint}")
     
+    # ========================================================================
+    # DYNAMIC MINIBATCH SIZE CALCULATION
+    # ========================================================================
+    # Automatically adjust minibatch_size based on num_envs to avoid assertion errors
+    # Requirement: batch_size % minibatch_size == 0
+    # batch_size = num_envs × horizon_length
+    
+    num_envs = env.unwrapped.num_envs
+    horizon_length = rl_games_cfg_omega.params.config.horizon_length
+    batch_size = num_envs * horizon_length
+    
+    # Calculate appropriate minibatch_size
+    # Strategy: Use batch_size / N where N is a power of 2 (4, 8, 16, etc.)
+    # Ensure minibatch_size is reasonable (at least 16, at most batch_size)
+    
+    if batch_size >= 8192:
+        # Large batch: use 1/4 to 1/8 of batch_size
+        minibatch_size = max(batch_size // 4, 8192)
+    elif batch_size >= 1024:
+        # Medium batch: use 1/4
+        minibatch_size = batch_size // 4
+    elif batch_size >= 256:
+        # Small batch: use 1/2 or full batch
+        minibatch_size = max(batch_size // 2, 64)
+    else:
+        # Very small batch: use full batch
+        minibatch_size = batch_size
+    
+    # Ensure minibatch_size divides batch_size evenly
+    while batch_size % minibatch_size != 0:
+        minibatch_size = minibatch_size // 2
+        if minibatch_size < 16:
+            minibatch_size = 16
+            break
+    
+    # Final check and fallback
+    if batch_size % minibatch_size != 0:
+        # Fallback: use batch_size itself
+        minibatch_size = batch_size
+        print(f"[WARNING]: Using minibatch_size = batch_size ({batch_size}) as fallback")
+    
+    # Update config with calculated minibatch_size
+    rl_games_cfg_omega.params.config.minibatch_size = minibatch_size
+    
+    print(f"[INFO]: Batch configuration:")
+    print(f"         num_envs = {num_envs}")
+    print(f"         horizon_length = {horizon_length}")
+    print(f"         batch_size = {batch_size}")
+    print(f"         minibatch_size = {minibatch_size} (auto-calculated)")
+    print(f"         mini_epochs = {rl_games_cfg_omega.params.config.mini_epochs}")
+    
     # Extract wrapper parameters from config
     rl_device = rl_games_cfg_omega.params.config.device
     clip_obs = rl_games_cfg_omega.params.env.get("clip_observations", math.inf)
